@@ -17,12 +17,14 @@
 package org.springframework.cloud.kubernetes.config;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ConfigMapList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -76,6 +78,22 @@ public class ConfigMapPropertySource extends MapPropertySource {
 			Environment environment) {
 		super(getName(client, name, namespace),
 				asObjectMap(getData(client, name, namespace, environment)));
+	}
+
+	static List<ConfigMapPropertySource> getPropertySourceList(KubernetesClient client,
+			String labelName, String labelValue, String name, String namespace,
+			Environment environment) {
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("Querying ConfigMaps with label/value " + labelName + "/"
+					+ (labelValue == null ? "*" : labelValue) + "in namespace "
+					+ namespace);
+		}
+		ConfigMapList list = client.configMaps().inNamespace(namespace)
+				.withLabel(labelName, labelValue).list();
+		return list.getItems().stream()
+				.map(item -> new ConfigMapPropertySource(client,
+						item.getMetadata().getName(), namespace, environment))
+				.collect(Collectors.toList());
 	}
 
 	private static String getName(KubernetesClient client, String name,

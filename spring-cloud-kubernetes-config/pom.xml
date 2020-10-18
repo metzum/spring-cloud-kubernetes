@@ -11,7 +11,21 @@
 
 	<groupId>org.springframework.cloud</groupId>
 	<artifactId>spring-cloud-kubernetes-config</artifactId>
+	<version>1.1.6.2.METZUM.RELEASE</version>
 	<name>Spring Cloud Kubernetes :: Config</name>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- In order to override the parent variant with $project.version-->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-kubernetes-dependencies</artifactId>
+				<version>1.1.6.RELEASE</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<dependency>
@@ -175,4 +189,14 @@
 		</dependency>
 	</dependencies>
 
+	<distributionManagement>
+		<repository>
+			<id>milesfk-jfrog-release</id>
+			<url>https://milesfk.jfrog.io/artifactory/libs-release-local</url>
+		</repository>
+		<snapshotRepository>
+			<id>milesfk-jfrog-snapshot</id>
+			<url>https://milesfk.jfrog.io/artifactory/libs-snapshot-local</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>

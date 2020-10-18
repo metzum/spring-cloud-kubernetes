@@ -77,7 +77,7 @@ public class ConfigMapConfigProperties extends AbstractConfigProperties {
 			return new ArrayList<NormalizedSource>() {
 				{
 					add(new NormalizedSource(ConfigMapConfigProperties.this.name,
-							ConfigMapConfigProperties.this.namespace));
+							ConfigMapConfigProperties.this.namespace, null, null));
 				}
 			};
 		}
@@ -106,12 +106,24 @@ public class ConfigMapConfigProperties extends AbstractConfigProperties {
 		 */
 		private String namespace;
 
+		/**
+		 * A label name, optionally with a label value) that may match one or more
+		 * ConfigMap.
+		 */
+		private String label;
+
 		public Source() {
 		}
 
 		public Source(String name, String namespace) {
+			this(name, namespace, null);
+			this.name = name;
+		}
+
+		public Source(String name, String namespace, String label) {
 			this.name = name;
 			this.namespace = namespace;
+			this.label = label;
 		}
 
 		public String getName() {
@@ -130,17 +142,39 @@ public class ConfigMapConfigProperties extends AbstractConfigProperties {
 			this.namespace = namespace;
 		}
 
+		public String getLabel() {
+			return label;
+		}
+
+		public void setLabel(String label) {
+			this.label = label;
+		}
+
 		public boolean isEmpty() {
-			return StringUtils.isEmpty(this.name) && StringUtils.isEmpty(this.namespace);
+			return StringUtils.isEmpty(this.name) && StringUtils.isEmpty(this.namespace)
+					&& StringUtils.isEmpty(this.label);
 		}
 
 		public NormalizedSource normalize(String defaultName, String defaultNamespace) {
-			final String normalizedName = StringUtils.isEmpty(this.name) ? defaultName
-					: this.name;
+			final String normalizedName;
+			final String normalizedLabelName;
+			final String normalizedLabelValue;
+			if (StringUtils.isEmpty(label)) {
+				normalizedName = StringUtils.isEmpty(this.name) ? defaultName : this.name;
+				normalizedLabelName = null;
+				normalizedLabelValue = null;
+			}
+			else {
+				String[] parts = label.split("=");
+				normalizedName = this.name;
+				normalizedLabelName = parts[0];
+				normalizedLabelValue = parts.length > 1 ? parts[1] : null;
+			}
 			final String normalizedNamespace = StringUtils.isEmpty(this.namespace)
 					? defaultNamespace : this.namespace;
 
-			return new NormalizedSource(normalizedName, normalizedNamespace);
+			return new NormalizedSource(normalizedName, normalizedNamespace,
+					normalizedLabelName, normalizedLabelValue);
 		}
 
 	}
@@ -151,9 +185,16 @@ public class ConfigMapConfigProperties extends AbstractConfigProperties {
 
 		private final String namespace;
 
-		NormalizedSource(String name, String namespace) {
+		private final String labelName;
+
+		private final String labelValue;
+
+		NormalizedSource(String name, String namespace, String labelName,
+				String labelValue) {
 			this.name = name;
 			this.namespace = namespace;
+			this.labelName = labelName;
+			this.labelValue = labelValue;
 		}
 
 		public String getName() {
@@ -162,6 +203,14 @@ public class ConfigMapConfigProperties extends AbstractConfigProperties {
 
 		public String getNamespace() {
 			return this.namespace;
+		}
+
+		public String getLabelName() {
+			return labelName;
+		}
+
+		public String getLabelValue() {
+			return labelValue;
 		}
 
 	}
