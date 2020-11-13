@@ -19,6 +19,7 @@ package org.springframework.cloud.kubernetes.config;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,8 @@ public class ConfigMapPropertySourceLocator implements PropertySourceLocator {
 			List<ConfigMapConfigProperties.NormalizedSource> sources = this.properties.determineSources();
 			CompositePropertySource composite = new CompositePropertySource("composite-configmap");
 			if (this.properties.isEnableApi()) {
-				sources.forEach(s -> composite.addFirstPropertySource(getMapPropertySourceForSingleConfigMap(env, s)));
+				sources.forEach(
+						s -> getMapPropertySourcesForConfigMaps(env, s).forEach(composite::addFirstPropertySource));
 			}
 
 			addPropertySourcesFromPaths(environment, composite);
@@ -81,14 +83,22 @@ public class ConfigMapPropertySourceLocator implements PropertySourceLocator {
 		return null;
 	}
 
-	private MapPropertySource getMapPropertySourceForSingleConfigMap(ConfigurableEnvironment environment,
+	private List<? extends MapPropertySource> getMapPropertySourcesForConfigMaps(ConfigurableEnvironment environment,
 			NormalizedSource normalizedSource) {
 
 		String configurationTarget = this.properties.getConfigurationTarget();
-		return new ConfigMapPropertySource(this.client,
-				getApplicationName(environment, normalizedSource.getName(), configurationTarget),
-				getApplicationNamespace(this.client, normalizedSource.getNamespace(), configurationTarget),
-				environment);
+		if (normalizedSource.getLabelName() == null) {
+			return Collections.singletonList(new ConfigMapPropertySource(this.client,
+					getApplicationName(environment, normalizedSource.getName(), configurationTarget),
+					getApplicationNamespace(this.client, normalizedSource.getNamespace(), configurationTarget),
+					environment));
+		}
+		else {
+			return ConfigMapPropertySource.getPropertySourceList(this.client, normalizedSource.getLabelName(),
+					normalizedSource.getLabelValue(),
+					getApplicationNamespace(this.client, normalizedSource.getNamespace(), configurationTarget),
+					environment);
+		}
 	}
 
 	private void addPropertySourcesFromPaths(Environment environment, CompositePropertySource composite) {
